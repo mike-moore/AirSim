@@ -7,6 +7,7 @@
 #include "common/Common.hpp"
 #include "common/CommonStructs.hpp"
 #include "PIPCamera.h"
+#include "controllers/Settings.hpp"
 #include "physics/Kinematics.hpp"
 #include "GameFramework/Pawn.h"
 
@@ -56,7 +57,6 @@ public: //interface
     void onCollision(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, 
         bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit);
 
-    const APIPCamera* getCamera(int index = 0) const;
     APIPCamera* getCamera(int index = 0);
     UnrealImageCapture* getImageCapture();
     int getCameraCount();
@@ -81,17 +81,13 @@ public: //interface
     std::string getLogLine();
 
     void printLogMessage(const std::string& message, const std::string& message_param = "", unsigned char severity = 0);
-    msr::airlib::CameraInfo getCameraInfo(int camera_id) const;
-    void setCameraOrientation(int camera_id, const Quaternionr& orientation);
 
     WrapperConfig& getConfig();
     const WrapperConfig& getConfig() const;
 
     static VehiclePawnWrapper::Pose toPose(const FVector& u_position, const FQuat& u_quat);
     msr::airlib::Pose getActorPose(std::string actor_name);
-    std::string getVehicleConfigName() const;
 
-    int getRemoteControlID() const;
 
 protected:
     UPROPERTY(VisibleAnywhere)
@@ -105,6 +101,7 @@ private: //methods
 
     //these methods are for future usage
     void plot(std::istream& s, FColor color, const Vector3r& offset);
+    void createCaptureSettings(const msr::airlib::Settings& settings, APIPCamera::CaptureSettings& capture_settings);
 
 
 private: //vars

@@ -2,8 +2,8 @@
 #include "AirBlueprintLib.h"
 
 
-CarPawnApi::CarPawnApi(VehiclePawnWrapper* pawn, UWheeledVehicleMovementComponent* movement)
-    : pawn_(pawn), movement_(movement)
+CarPawnApi::CarPawnApi(VehiclePawnWrapper* pawn, UWheeledVehicleMovementComponent* movement_)
+    : pawn_(pawn), movement_(movement_)
 {
 }
 
@@ -85,18 +85,6 @@ msr::airlib::Pose CarPawnApi::simGetObjectPose(const std::string& actor_name)
 const CarApiBase::CarControls& CarPawnApi::getCarControls() const
 {
     return last_controls_;
-}
-
-msr::airlib::CameraInfo CarPawnApi::getCameraInfo(int camera_id) const
-{
-    return pawn_->getCameraInfo(camera_id);
-}
-
-void CarPawnApi::setCameraOrientation(int camera_id, const msr::airlib::Quaternionr& orientation)
-{
-    UAirBlueprintLib::RunCommandOnGameThread([&camera_id, &orientation, this]() {
-        pawn_->setCameraOrientation(camera_id, orientation);
-    }, true);
 }
 
 CarApiBase::CarState CarPawnApi::getCarState()

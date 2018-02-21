@@ -4,7 +4,7 @@
 #ifndef air_CarApiBase_hpp
 #define air_CarApiBase_hpp
 
-#include "common/ImageCaptureBase.hpp"
+#include "controllers/ImageCaptureBase.hpp"
 #include "common/VectorMath.hpp"
 #include "common/CommonStructs.hpp"
 #include "api/VehicleApiBase.hpp"
@@ -52,15 +52,17 @@ public:
         int gear;
         CollisionInfo collision;
         Kinematics::State kinematics_true;
+	GeoPoint gps_location;
         uint64_t timestamp;
 
         CarState(float speed_val, int gear_val, const CollisionInfo& collision_val, 
-            const Kinematics::State& kinematics_true_val, uint64_t timestamp_val)
-            : speed(speed_val), gear(gear_val), collision(collision_val), kinematics_true(kinematics_true_val), timestamp(timestamp_val)
+            const Kinematics::State& kinematics_true_val,const GeoPoint& gps_location_val, uint64_t timestamp_val)
+            : speed(speed_val), gear(gear_val), collision(collision_val), kinematics_true(kinematics_true_val),gps_location(gps_location_val), timestamp(timestamp_val)
         {
         }
     };
 
+    virtual GeoPoint getGpsLocation() = 0;
     virtual void setCarControls(const CarControls& controls) = 0;
     virtual CarState getCarState() = 0;
     virtual const CarApiBase::CarControls& getCarControls() const = 0;

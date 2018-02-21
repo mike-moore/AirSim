@@ -17,9 +17,6 @@ STRICT_MODE_OFF
 #define RPCLIB_MSGPACK clmdep_msgpack
 #endif // !RPCLIB_MSGPACK
 #undef check
-#ifdef nil
-#undef nil
-#endif // nil
 #include "rpc/client.h"
 #include "vehicles/car/api/CarRpcLibAdapators.hpp"
 STRICT_MODE_ON
@@ -54,6 +51,10 @@ CarApiBase::CarState CarRpcLibClient::getCarState()
         call("getCarState").as<CarRpcLibAdapators::CarState>().to();
 }
 
+GeoPoint CarRpcLibClient::getGpsLocation()
+{
+    return static_cast<rpc::client*>(getClient())->call("getGpsLocation").as<CarRpcLibAdapators::GeoPoint>().to();
+}
 
 }} //namespace
 

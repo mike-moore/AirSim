@@ -7,7 +7,7 @@
 #include "common/Common.hpp"
 #include "common/CommonStructs.hpp"
 #include "api/RpcLibAdapatorsBase.hpp"
-#include "common/ImageCaptureBase.hpp"
+#include "controllers/ImageCaptureBase.hpp"
 #include "vehicles/car/api/CarApiBase.hpp"
 #include "rpc/msgpack.hpp"
 
@@ -52,9 +52,10 @@ public:
         int gear;
         CollisionInfo collision;
         KinematicsState kinematics_true; //ground truth
+	GeoPoint gps_location;
         uint64_t timestamp;
 
-        MSGPACK_DEFINE_MAP(speed, gear, collision, kinematics_true, timestamp);
+        MSGPACK_DEFINE_MAP(speed, gear, collision, kinematics_true, gps_location, timestamp);
 
         CarState()
         {}
@@ -65,13 +66,16 @@ public:
             gear = s.gear;
             collision = s.collision;
             kinematics_true = s.kinematics_true;
+	    gps_location = s.gps_location;
             timestamp = s.timestamp;
         }
         msr::airlib::CarApiBase::CarState to() const
         {
             return msr::airlib::CarApiBase::CarState(
-                speed, gear, collision.to(), kinematics_true.to(), timestamp);
+                speed, gear, collision.to(), kinematics_true.to(),gps_location.to(), timestamp);
         }
+	
+	
     };
 };
 

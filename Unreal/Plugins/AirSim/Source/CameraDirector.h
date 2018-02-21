@@ -5,7 +5,6 @@
 #include "PIPCamera.h"
 #include "GameFramework/Actor.h"
 #include "ManualPoseController.h"
-#include "common/common_utils/Utils.hpp"
 #include "GameFramework/SpringArmComponent.h"
 #include "CameraDirector.generated.h"
 
@@ -18,8 +17,7 @@ enum class ECameraDirectorMode : uint8
     CAMERA_DIRECTOR_MODE_FLY_WITH_ME = 3	UMETA(DisplayName = "FlyWithMe"),
     CAMERA_DIRECTOR_MODE_MANUAL = 4	UMETA(DisplayName = "Manual"),
     CAMERA_DIRECTOR_MODE_SPRINGARM_CHASE = 5	UMETA(DisplayName = "SpringArmChase"),
-    CAMREA_DIRECTOR_MODE_BACKUP = 6     UMETA(DisplayName = "Backup"),
-    CAMREA_DIRECTOR_MODE_NODISPLAY = 7      UMETA(DisplayName = "No Display")
+    CAMREA_DIRECTOR_MODE_BACKUP = 6 UMETA(DisplayName = "Backup")
 };
 
 UCLASS()
@@ -39,7 +37,6 @@ public:
     void inputEventFlyWithView();
     void inputEventSpringArmChaseView();
     void inputEventBackupView();
-    void inputEventNoDisplayView();
 
 public:
     ACameraDirector();
@@ -70,14 +67,10 @@ public:
 private:
     void setupInputBindings();
     void attachSpringArm(bool attach);
-    void disableCameras(bool fpv, bool backup, bool external);
-    void setupCameraFromSettings();
+    void disableNonExternalCameras();
 
 
 private:
-    typedef common_utils::Utils Utils;
-
-
     APIPCamera* fpv_camera_;
     APIPCamera* backup_camera_;
     APIPCamera* external_camera_;

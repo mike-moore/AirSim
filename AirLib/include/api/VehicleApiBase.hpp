@@ -5,7 +5,7 @@
 #define air_VehicleApiBase_hpp
 
 #include "common/CommonStructs.hpp"
-#include "common/ImageCaptureBase.hpp"
+#include "controllers/ImageCaptureBase.hpp"
 
 namespace msr { namespace airlib {
 
@@ -32,9 +32,6 @@ public:
 
     virtual Pose simGetObjectPose(const std::string& object_name) = 0;
 
-    virtual CameraInfo getCameraInfo(int camera_id) const = 0;
-    virtual void setCameraOrientation(int camera_id, const Quaternionr& orientation) = 0;
-    
     virtual ~VehicleApiBase() = default;
 };
 

@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "ManualPoseController.h"
 #include "VehiclePawnWrapper.h"
-#include "common/AirSimSettings.hpp"
+#include "Recording/RecordingSettings.h"
 #include "SimModeBase.generated.h"
 
 
@@ -47,15 +47,25 @@ public:
 
 
 protected:
-    typedef msr::airlib::AirSimSettings AirSimSettings;
     virtual void setupInputBindings();
-    virtual const AirSimSettings& getSettings() const;
 
 protected: //settings
+    bool is_record_ui_visible;
+    ECameraDirectorMode initial_view_mode;
     int record_tick_count;
+    bool enable_rpc;
+    std::string api_server_address;
+    std::string default_vehicle_config;
+    std::string physics_engine_name;
+    std::string usage_scenario;
+    bool enable_collision_passthrough;
+    RecordingSettings recording_settings;
+    std::string clock_type;
+    float settings_version_actual;
+    float settings_version_minimum = 1;
+    bool engine_sound;
 
-private:
-    typedef common_utils::Utils Utils;
+    float clock_speed;
 
 private:
     void readSettings();

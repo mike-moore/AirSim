@@ -25,7 +25,7 @@ Cars in AirSim
 
 ## How to Use It
 
-### Choosing Your Vehicle: Car or Multirotor
+### Chosing Your Vehicle: Car or Multirotor
 By default AirSim spawns multirotor. You can easily change this to car and use all of AirSim goodies. Please see [using car](docs/using_car.md) guide.
 
 ### Manual drive
