@@ -307,18 +307,6 @@ int MultiRotorConnector::getSegmentationObjectID(const std::string& mesh_name)
     return UAirBlueprintLib::GetMeshStencilID(mesh_name);
 }
 
-CameraInfo MultiRotorConnector::getCameraInfo(int camera_id) const
-{
-    return vehicle_pawn_wrapper_->getCameraInfo(camera_id);
-}
-
-void MultiRotorConnector::setCameraOrientation(int camera_id, const Quaternionr& orientation) 
-{
-    UAirBlueprintLib::RunCommandOnGameThread([&camera_id, &orientation, this]() {
-        vehicle_pawn_wrapper_->setCameraOrientation(camera_id, orientation);
-    }, true);
-}
-
 void MultiRotorConnector::startApiServer()
 {
     if (enable_rpc_) {

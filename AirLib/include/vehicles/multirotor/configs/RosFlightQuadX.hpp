@@ -6,25 +6,21 @@
 
 #include "vehicles/multirotor/firmwares/ros_flight/RosFlightDroneController.hpp"
 #include "vehicles/multirotor/MultiRotorParams.hpp"
-#include "common/AirSimSettings.hpp"
-#include "sensors/SensorFactory.hpp"
+#include "controllers/Settings.hpp"
 
 
 namespace msr { namespace airlib {
 
 class RosFlightQuadX : public MultiRotorParams {
 public:
-    RosFlightQuadX(const AirSimSettings::VehicleSettings& vehicle_settings, std::shared_ptr<const SensorFactory> sensor_factory)
-        : sensor_factory_(sensor_factory)
+    RosFlightQuadX(Settings& settings)
     {
-        unused(vehicle_settings);
+        unused(settings);
     }
 
 protected:
-    virtual void setupParams() override
+    virtual void setup(Params& params, SensorCollection& sensors, unique_ptr<DroneControllerBase>& controller) override
     {
-        auto& params = getParams();
-
         //set up arm lengths
         //dimensions are for F450 frame: http://artofcircuits.com/product/quadcopter-frame-hj450-with-power-distribution
         params.rotor_count = 4;
@@ -58,23 +54,20 @@ protected:
         params.inertia(1, 1) = 0.08f;
         params.inertia(2, 2) = 0.12f;
 
+        createStandardSensors(sensor_storage_, sensors, params.enabled_sensors);
+        createController(controller, sensors);
+
         //leave everything else to defaults
     }
 
-    virtual std::unique_ptr<SensorBase> createSensor(SensorBase::SensorType sensor_type) override
+private:
+    void createController(unique_ptr<DroneControllerBase>& controller, SensorCollection& sensors)
     {
-        return sensor_factory_->createSensor(sensor_type);
-    }
-
-    virtual std::unique_ptr<DroneControllerBase> createController() override
-    {
-        return std::unique_ptr<DroneControllerBase>(new RosFlightDroneController(& getSensors(), this));
+        controller.reset(new RosFlightDroneController(&sensors, this));
     }
 
 private:
     vector<unique_ptr<SensorBase>> sensor_storage_;
-    std::shared_ptr<const SensorFactory> sensor_factory_;
-
 };
 
 }} //namespace

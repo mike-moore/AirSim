@@ -7,7 +7,7 @@
 #include "common/Common.hpp"
 #include <functional>
 #include "common/CommonStructs.hpp"
-#include "common/ImageCaptureBase.hpp"
+#include "controllers/ImageCaptureBase.hpp"
 #include "vehicles/multirotor/controllers/DroneControllerBase.hpp"
 #include "api/RpcLibClientBase.hpp"
 #include "vehicles/multirotor/controllers/DroneCommon.hpp"
@@ -45,12 +45,10 @@ public:
     Vector3r getPosition();
     Vector3r getVelocity();
     Quaternionr getOrientation();
+    RCData getRCData();
     GeoPoint getGpsLocation();
     bool isSimulationMode();
     std::string getDebugInfo();
-
-    RCData getRCData();
-    void setRCData(const RCData& rc_data);
 
     DroneControllerBase::LandedState getLandedState();
 

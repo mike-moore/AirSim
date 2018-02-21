@@ -178,8 +178,10 @@ void ACarPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other,
         HitNormal, NormalImpulse, Hit);
 }
 
-void ACarPawn::initializeForBeginPlay(bool enable_rpc, const std::string& api_server_address, bool engine_sound)
+void ACarPawn::initializeForBeginPlay(bool enable_rpc, const std::string& api_server_address, bool engine_sound, int remote_control_id)
 {
+    remote_control_id_ = remote_control_id;
+
     if (engine_sound)
         EngineSoundComponent->Activate();
     else
@@ -213,8 +215,8 @@ void ACarPawn::initializeForBeginPlay(bool enable_rpc, const std::string& api_se
     keyboard_controls_ = joystick_controls_ = CarPawnApi::CarControls();
 
     //joystick
-    if (wrapper_->getRemoteControlID() >= 0) {
-        joystick_.getJoyStickState(wrapper_->getRemoteControlID(), joystick_state_);
+    if (remote_control_id_ >= 0) {
+        joystick_.getJoyStickState(remote_control_id_, joystick_state_);
         if (joystick_state_.is_initialized)
             UAirBlueprintLib::LogMessageString("RC Controller on USB: ", joystick_state_.pid_vid == "" ?
                 "(Detected)" : joystick_state_.pid_vid, LogDebugLevel::Informational);
@@ -416,7 +418,7 @@ void ACarPawn::Tick(float Delta)
 void ACarPawn::updateCarControls()
 {
     const msr::airlib::CarApiBase::CarControls* current_controls = nullptr;
-    if (wrapper_->getRemoteControlID() >= 0 && joystick_state_.is_initialized) {
+    if (remote_control_id_ >= 0 && joystick_state_.is_initialized) {
         joystick_.getJoyStickState(0, joystick_state_);
 
         if ((joystick_state_.buttons & 4) | (joystick_state_.buttons & 1024)) { //X button or Start button

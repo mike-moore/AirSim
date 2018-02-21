@@ -6,7 +6,7 @@
 
 #include "common/Common.hpp"
 #include "common/CommonStructs.hpp"
-#include "common/ImageCaptureBase.hpp"
+#include "controllers/ImageCaptureBase.hpp"
 
 
 namespace msr { namespace airlib {
@@ -40,9 +40,7 @@ public:
     void simPrintLogMessage(const std::string& message, std::string message_param = "", unsigned char severity = 0);
 
     Pose simGetObjectPose(const std::string& object_name);
-    CameraInfo getCameraInfo(int camera_id);
-    void setCameraOrientation(int camera_id, const Quaternionr& orientation);
-
+    
     virtual ~RpcLibClientBase();    //required for pimpl
 
 protected:

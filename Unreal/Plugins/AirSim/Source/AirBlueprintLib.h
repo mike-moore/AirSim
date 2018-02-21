@@ -52,7 +52,7 @@ public:
     static bool SetMeshStencilID(const std::string& mesh_name, int object_id,
         bool is_name_regex = false);
     static int GetMeshStencilID(const std::string& mesh_name);
-    static void InitializeMeshStencilIDs(bool ignore_existing);
+    static void InitializeMeshStencilIDs();
 
     static bool IsInGameThread();
     
@@ -81,8 +81,6 @@ public:
 
     static float GetDisplayGamma();
 
-    static EAppReturnType::Type ShowMessage(EAppMsgType::Type MessageType, const std::string& message, const std::string& title);
-
     static bool getLogMessagesHidden()
     {
         return log_messages_hidden;
@@ -91,8 +89,6 @@ public:
     {
         log_messages_hidden = is_hidden;
     }
-
-    static void enableWorldRendering(AActor* context, bool enable);
 
 private:
     template<typename T>

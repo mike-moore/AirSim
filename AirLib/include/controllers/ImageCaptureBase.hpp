@@ -21,7 +21,6 @@ public: //types
         DisparityNormalized,
         Segmentation,
         SurfaceNormals,
-        Infrared,
         Count //must be last
     };
 

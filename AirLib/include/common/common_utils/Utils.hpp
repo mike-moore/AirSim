@@ -23,9 +23,6 @@
 #include <queue>
 #include "type_utils.hpp"
 
-#ifndef _WIN32
-#include <limits.h> // needed for CHAR_BIT used below
-#endif
 
 #define _USE_MATH_DEFINES
 #include <cmath>

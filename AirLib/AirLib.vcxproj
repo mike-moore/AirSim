@@ -27,7 +27,6 @@
     <ClInclude Include="include\api\RpcLibClientBase.hpp" />
     <ClInclude Include="include\api\RpcLibServerBase.hpp" />
     <ClInclude Include="include\api\VehicleApiBase.hpp" />
-    <ClInclude Include="include\common\AirSimSettings.hpp" />
     <ClInclude Include="include\common\ClockBase.hpp" />
     <ClInclude Include="include\common\Common.hpp" />
     <ClInclude Include="include\common\CommonStructs.hpp" />
@@ -66,9 +65,8 @@
     <ClInclude Include="include\common\UpdatableObject.hpp" />
     <ClInclude Include="include\common\VectorMath.hpp" />
     <ClInclude Include="include\common\common_utils\AsyncTasker.hpp" />
-    <ClInclude Include="include\common\ImageCaptureBase.hpp" />
+    <ClInclude Include="include\controllers\ImageCaptureBase.hpp" />
     <ClInclude Include="include\controllers\VehicleConnectorBase.hpp" />
-    <ClInclude Include="include\sensors\SensorFactory.hpp" />
     <ClInclude Include="include\vehicles\car\api\CarApiBase.hpp" />
     <ClInclude Include="include\vehicles\multirotor\api\MultirotorRpcLibAdapators.hpp" />
     <ClInclude Include="include\vehicles\multirotor\api\MultirotorRpcLibClient.hpp" />
@@ -97,12 +95,10 @@
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\AirSimSimpleFlightCommLink.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\AirSimSimpleFlightEstimator.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\AirSimSimpleFlightCommon.hpp" />
-    <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\AdaptiveController.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\AngleLevelController.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\AngleRateController.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\CascadeController.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\ConstantOutputController.hpp" />
-    <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\interfaces\IPidIntegrator.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\OffboardApi.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\Firmware.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\interfaces\CommonStructs.hpp" />
@@ -125,8 +121,6 @@
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\PidController.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\PositionController.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\RemoteControl.hpp" />
-    <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\RungKuttaPidIntegrator.hpp" />
-    <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\StdPidIntegrator.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\firmware\VelocityController.hpp" />
     <ClInclude Include="include\vehicles\multirotor\firmwares\simple_flight\SimpleFlightDroneController.hpp" />
     <ClInclude Include="include\physics\DebugPhysicsBody.hpp" />
@@ -145,10 +139,10 @@
     <ClInclude Include="include\vehicles\car\api\CarRpcLibServer.hpp" />
     <ClInclude Include="include\safety\SafetyEval.hpp" />
     <ClInclude Include="include\vehicles\multirotor\api\MultirotorApi.hpp" />
-    <ClInclude Include="include\common\Settings.hpp" />
+    <ClInclude Include="include\controllers\Settings.hpp" />
     <ClInclude Include="include\safety\SphereGeoFence.hpp" />
     <ClInclude Include="include\controllers\VehicleControllerBase.hpp" />
-    <ClInclude Include="include\common\Waiter.hpp" />
+    <ClInclude Include="include\controllers\Waiter.hpp" />
     <ClInclude Include="include\physics\Environment.hpp" />
     <ClInclude Include="include\physics\FastPhysicsEngine.hpp" />
     <ClInclude Include="include\physics\Kinematics.hpp" />

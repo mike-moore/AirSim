@@ -11,7 +11,6 @@
 
 namespace msr { namespace airlib {
 
-
 class SimpleFlightTest : public TestBase
 {
 public:
@@ -20,9 +19,7 @@ public:
         auto clock = std::make_shared<SteppableClock>(3E-3f);
         ClockFactory::get(clock);
 
-        SensorFactory sensor_factory;
-
-        std::unique_ptr<MultiRotorParams> params = MultiRotorParamsFactory::createConfig("SimpleFlight", std::make_shared<SensorFactory>());
+        std::unique_ptr<MultiRotorParams> params = MultiRotorParamsFactory::createConfig("SimpleFlight");
         MultiRotor vehicle;
         std::unique_ptr<Environment> environment;
         vehicle.initialize(params.get(), Pose(), 

@@ -5,7 +5,7 @@
 #define air_VehicleConnectorBase_hpp
 
 #include "VehicleControllerBase.hpp"
-#include "common/ImageCaptureBase.hpp"
+#include "ImageCaptureBase.hpp"
 #include "common/UpdatableObject.hpp"
 
 namespace msr { namespace airlib {
@@ -34,8 +34,7 @@ public:
     virtual void printLogMessage(const std::string& message, std::string message_param = "", unsigned char severity = 0) = 0;
     virtual Pose getActorPose(const std::string& actor_name) = 0;
     virtual Kinematics::State getTrueKinematics() = 0;
-    virtual CameraInfo getCameraInfo(int camera_id) const = 0;
-    virtual void setCameraOrientation(int camera_id, const Quaternionr& orientation) = 0;
+
 };
 
 
