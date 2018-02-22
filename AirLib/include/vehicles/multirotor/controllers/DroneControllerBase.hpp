@@ -8,7 +8,7 @@
 #include "common/Common.hpp"
 #include "controllers/VehicleControllerBase.hpp"
 #include "common/common_utils/WorkerThread.hpp"
-#include "controllers/Waiter.hpp"
+#include "common/Waiter.hpp"
 #include "safety/SafetyEval.hpp"
 #include "common/CommonStructs.hpp"
 #include "DroneCommon.hpp"
@@ -202,6 +202,8 @@ public: //interface for outside world
     /// Get the current RC inputs when RC transmitter is talking to to flight controller
     virtual RCData getRCData() = 0;
 
+    virtual RCData estimateRCTrims(CancelableBase& cancelable_action, float trimduration = 1, float minCountForTrim = 10, float maxTrim = 100);
+
     /// Set the RC data that should be used by flight controller
     virtual void setRCData(const RCData& rcData) = 0;
 
@@ -325,6 +327,8 @@ private:    //types
             safety_eval_ptr_->setObsAvoidanceStrategy(old_strategy_);   
         }
     };
+
+    RCData rc_data_trims_;
 
 private: //methods
     float setNextPathPosition(const vector<Vector3r>& path, const vector<PathSegment>& path_segs,

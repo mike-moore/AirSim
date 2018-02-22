@@ -4,12 +4,21 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include <string>
 #include <exception>
+#include "Materials/MaterialInstanceDynamic.h"
 #include "AirBlueprintLib.h"
 #include "ImageUtils.h"
 
-unsigned int APIPCamera::imageTypeCount()
+
+APIPCamera::APIPCamera()
 {
-    return Utils::toNumeric(ImageType::Count);
+    static ConstructorHelpers::FObjectFinder<UMaterial> mat_finder(TEXT("Material'/AirSim/HUDAssets/CameraSensorNoise.CameraSensorNoise'"));
+    if (mat_finder.Succeeded())
+    {
+        noise_material_static_ = mat_finder.Object;
+    }
+    else
+        UAirBlueprintLib::LogMessageString("Cannot create noise material for the PIPCamera", 
+            "", LogDebugLevel::Failure);
 }
 
 void APIPCamera::PostInitializeComponents()
@@ -32,6 +41,8 @@ void APIPCamera::PostInitializeComponents()
         UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("DisparityNormalizedCaptureComponent"));
     captures_[Utils::toNumeric(ImageType::Segmentation)] = 
         UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("SegmentationCaptureComponent"));
+    captures_[Utils::toNumeric(ImageType::Infrared)] = 
+        UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("InfraredCaptureComponent"));
     captures_[Utils::toNumeric(ImageType::SurfaceNormals)] = 
         UAirBlueprintLib::GetActorComponent<USceneCaptureComponent2D>(this, TEXT("NormalsCaptureComponent"));
 }
@@ -40,9 +51,7 @@ void APIPCamera::BeginPlay()
 {
     Super::BeginPlay();
     
-    //set default for brigher images
-    capture_settings_.assign(imageTypeCount(), CaptureSettings());
-    capture_settings_[Utils::toNumeric(ImageType::Scene)].target_gamma = CaptureSettings::kSceneTargetGamma;
+    noise_materials_.AddZeroed(imageTypeCount() + 1);
 
     //by default all image types are disabled
     camera_type_enabled_.assign(imageTypeCount(), false);
@@ -52,17 +61,34 @@ void APIPCamera::BeginPlay()
         captures_[image_type]->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
 
         render_targets_[image_type] = NewObject<UTextureRenderTarget2D>();
-        updateCaptureComponentSettings(captures_[image_type], render_targets_[image_type], capture_settings_[image_type]);
     }
 }
 
 void APIPCamera::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    if (noise_materials_.Num()) {
+        for (unsigned int image_type = 0; image_type < imageTypeCount(); ++image_type) {
+            if (noise_materials_[image_type + 1])
+                captures_[image_type]->PostProcessSettings.RemoveBlendable(noise_materials_[image_type + 1]);
+        }
+        if (noise_materials_[0])
+            camera_->PostProcessSettings.RemoveBlendable(noise_materials_[0]);
+    }
+
+    noise_material_static_ = nullptr;
+    noise_materials_.Reset();
+
     for (unsigned int image_type = 0; image_type < imageTypeCount(); ++image_type) {
         //use final color for all calculations
         captures_[image_type] = nullptr;
         render_targets_[image_type] = nullptr;
     }
+}
+
+
+unsigned int APIPCamera::imageTypeCount()
+{
+    return Utils::toNumeric(ImageType::Count);
 }
 
 void APIPCamera::showToScreen()
@@ -89,55 +115,97 @@ void APIPCamera::setCameraTypeEnabled(ImageType type, bool enabled)
     enableCaptureComponent(type, enabled);
 }
 
-const APIPCamera::CaptureSettings& APIPCamera::getCaptureSettings(ImageType type)
+void APIPCamera::setImageTypeSettings(int image_type, const APIPCamera::CaptureSetting& capture_setting, 
+    const APIPCamera::NoiseSetting& noise_setting)
 {
-    return capture_settings_[Utils::toNumeric(type)];
+    if (image_type >= 0) { //scene captue components
+        updateCaptureComponentSetting(captures_[image_type], render_targets_[image_type],
+            capture_setting);
+
+        setNoiseMaterial(image_type, captures_[image_type], captures_[image_type]->PostProcessSettings, noise_setting);
+    }
+    else { //camera component
+        updateCameraSetting(camera_, capture_setting);
+
+        setNoiseMaterial(image_type, camera_, camera_->PostProcessSettings, noise_setting);
+    }
+
+
+
 }
 
-void APIPCamera::setCaptureSettings(APIPCamera::ImageType type, const APIPCamera::CaptureSettings& settings)
+void APIPCamera::updateCaptureComponentSetting(USceneCaptureComponent2D* capture, UTextureRenderTarget2D* render_target, const CaptureSetting& setting)
 {
-    unsigned int image_type = Utils::toNumeric(type);
+    render_target->InitAutoFormat(setting.width, setting.height); //256 X 144, X 480
+    if (!std::isnan(setting.target_gamma))
+        render_target->TargetGamma = setting.target_gamma;
 
-    capture_settings_[image_type] = settings;
-    updateCaptureComponentSettings(captures_[image_type], render_targets_[image_type], 
-        capture_settings_[image_type]);
+    if (!std::isnan(setting.fov_degrees))
+        capture->FOVAngle = setting.fov_degrees;
+
+    updateCameraPostProcessingSetting(capture->PostProcessSettings, setting);
 }
 
-void APIPCamera::updateCaptureComponentSettings(USceneCaptureComponent2D* capture, UTextureRenderTarget2D* render_target, const CaptureSettings& settings)
+void APIPCamera::updateCameraSetting(UCameraComponent* camera, const CaptureSetting& setting)
 {
-    if (render_target) {
-        render_target->InitAutoFormat(settings.width, settings.height); //256 X 144, X 480
-        if (!std::isnan(settings.target_gamma))
-            render_target->TargetGamma = settings.target_gamma;
-    }
-    //else we will set this after this components get created
+    //if (!std::isnan(setting.target_gamma))
+    //    camera-> = setting.target_gamma;
 
-    if (capture) {
-        if (!std::isnan(settings.fov_degrees))
-            capture->FOVAngle = settings.fov_degrees;
-        if (!std::isnan(settings.motion_blur_amount))
-            capture->PostProcessSettings.MotionBlurAmount = settings.motion_blur_amount;
+    if (!std::isnan(setting.fov_degrees))
+        camera->SetFieldOfView(setting.fov_degrees);
 
-        capture->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;        
-        if (!std::isnan(settings.auto_exposure_speed))
-            capture->PostProcessSettings.AutoExposureSpeedDown = capture->PostProcessSettings.AutoExposureSpeedUp = settings.auto_exposure_speed;
-        if (!std::isnan(settings.auto_exposure_max_brightness))
-            capture->PostProcessSettings.AutoExposureMaxBrightness = settings.auto_exposure_max_brightness;
-        if (!std::isnan(settings.auto_exposure_min_brightness))
-            capture->PostProcessSettings.AutoExposureMinBrightness = settings.auto_exposure_min_brightness;
-        if (!std::isnan(settings.auto_exposure_bias))
-            capture->PostProcessSettings.AutoExposureBias = settings.auto_exposure_bias;
-        if (!std::isnan(settings.auto_exposure_low_percent))
-            capture->PostProcessSettings.AutoExposureLowPercent = settings.auto_exposure_low_percent;        
-        if (!std::isnan(settings.auto_exposure_high_percent))
-            capture->PostProcessSettings.AutoExposureHighPercent = settings.auto_exposure_high_percent;    
-        if (!std::isnan(settings.auto_exposure_histogram_log_min))
-            capture->PostProcessSettings.HistogramLogMin = settings.auto_exposure_histogram_log_min;    
-        if (!std::isnan(settings.auto_exposure_histogram_log_max))
-            capture->PostProcessSettings.HistogramLogMax = settings.auto_exposure_histogram_log_max;    
+    updateCameraPostProcessingSetting(camera->PostProcessSettings, setting);
+}
 
-    }
-    //else we will set this after this components get created
+
+void APIPCamera::updateCameraPostProcessingSetting(FPostProcessSettings& obj, const CaptureSetting& setting)
+{
+    if (!std::isnan(setting.motion_blur_amount))
+        obj.MotionBlurAmount = setting.motion_blur_amount;
+    if (setting.auto_exposure_method >= 0)
+        obj.AutoExposureMethod = Utils::toEnum<EAutoExposureMethod>(setting.auto_exposure_method);       
+    if (!std::isnan(setting.auto_exposure_speed))
+        obj.AutoExposureSpeedDown = obj.AutoExposureSpeedUp = setting.auto_exposure_speed;
+    if (!std::isnan(setting.auto_exposure_max_brightness))
+        obj.AutoExposureMaxBrightness = setting.auto_exposure_max_brightness;
+    if (!std::isnan(setting.auto_exposure_min_brightness))
+        obj.AutoExposureMinBrightness = setting.auto_exposure_min_brightness;
+    if (!std::isnan(setting.auto_exposure_bias))
+        obj.AutoExposureBias = setting.auto_exposure_bias;
+    if (!std::isnan(setting.auto_exposure_low_percent))
+        obj.AutoExposureLowPercent = setting.auto_exposure_low_percent;        
+    if (!std::isnan(setting.auto_exposure_high_percent))
+        obj.AutoExposureHighPercent = setting.auto_exposure_high_percent;    
+    if (!std::isnan(setting.auto_exposure_histogram_log_min))
+        obj.HistogramLogMin = setting.auto_exposure_histogram_log_min;    
+    if (!std::isnan(setting.auto_exposure_histogram_log_max))
+        obj.HistogramLogMax = setting.auto_exposure_histogram_log_max;  
+}
+
+void APIPCamera::setNoiseMaterial(int image_type, UObject* outer, FPostProcessSettings& obj, const NoiseSetting& settings)
+{
+    if (!settings.Enabled)
+        return;
+
+    UMaterialInstanceDynamic* noise_material_ = UMaterialInstanceDynamic::Create(noise_material_static_, outer);
+    noise_materials_[image_type + 1] = noise_material_;
+
+
+    noise_material_->SetScalarParameterValue("HorzWaveStrength", settings.HorzWaveStrength);
+    noise_material_->SetScalarParameterValue("RandSpeed", settings.RandSpeed);
+    noise_material_->SetScalarParameterValue("RandSize", settings.RandSize);
+    noise_material_->SetScalarParameterValue("RandDensity", settings.RandDensity);
+    noise_material_->SetScalarParameterValue("RandContrib", settings.RandContrib);
+    noise_material_->SetScalarParameterValue("HorzWaveContrib", settings.HorzWaveContrib);
+    noise_material_->SetScalarParameterValue("HorzWaveVertSize", settings.HorzWaveVertSize);
+    noise_material_->SetScalarParameterValue("HorzWaveScreenSize", settings.HorzWaveScreenSize);
+    noise_material_->SetScalarParameterValue("HorzNoiseLinesContrib", settings.HorzNoiseLinesContrib);
+    noise_material_->SetScalarParameterValue("HorzNoiseLinesDensityY", settings.HorzNoiseLinesDensityY);
+    noise_material_->SetScalarParameterValue("HorzNoiseLinesDensityXY", settings.HorzNoiseLinesDensityXY);
+    noise_material_->SetScalarParameterValue("HorzDistortionStrength", settings.HorzDistortionStrength);
+    noise_material_->SetScalarParameterValue("HorzDistortionContrib", settings.HorzDistortionContrib);
+
+    obj.AddBlendable(noise_material_, 1.0f);
 }
 
 void APIPCamera::enableCaptureComponent(const APIPCamera::ImageType type, bool is_enabled)
@@ -192,6 +260,9 @@ void APIPCamera::disableMain()
 {
     camera_->Deactivate();
     camera_->SetVisibility(false);
+    //APlayerController* controller = this->GetWorld()->GetFirstPlayerController();
+    //if (controller && controller->GetViewTarget() == this)
+    //    controller->SetViewTarget(nullptr);
 }
 
 

@@ -10,9 +10,11 @@
 #include "common/common_utils/Utils.hpp"
 #include "Components/StaticMeshComponent.h"
 #include "EngineUtils.h"
+#include "Runtime/Landscape/Classes/LandscapeComponent.h"
 #include "UObjectIterator.h"
 //#include "Runtime/Foliage/Public/FoliageType.h"
 #include "Kismet/KismetStringLibrary.h"
+#include "MessageDialog.h"
 #include "Engine/Engine.h"
 
 /*
@@ -28,6 +30,28 @@ bool UAirBlueprintLib::log_messages_hidden = false;
 void UAirBlueprintLib::LogMessageString(const std::string &prefix, const std::string &suffix, LogDebugLevel level, float persist_sec)
 {
     LogMessage(FString(prefix.c_str()), FString(suffix.c_str()), level, persist_sec);
+}
+
+EAppReturnType::Type UAirBlueprintLib::ShowMessage(EAppMsgType::Type message_type, const std::string& message, const std::string& title)
+{
+    FText title_text = FText::FromString(title.c_str());
+
+    return FMessageDialog::Open(message_type,
+        FText::FromString(message.c_str()),
+        &title_text);
+}
+
+void UAirBlueprintLib::enableWorldRendering(AActor* context, bool enable)
+{
+    ULocalPlayer* player = context->GetWorld()->GetFirstLocalPlayerFromController();
+    if (player)
+    {
+        UGameViewportClient* viewport_client = player->ViewportClient;
+        if (viewport_client)
+        {
+            viewport_client->bDisableWorldRendering = enable;
+        }
+    }
 }
 
 void UAirBlueprintLib::LogMessage(const FString &prefix, const FString &suffix, LogDebugLevel level, float persist_sec)
@@ -134,18 +158,18 @@ void UAirBlueprintLib::FindAllActor(const UObject* context, TArray<AActor*>& fou
 template<typename T>
 void UAirBlueprintLib::InitializeObjectStencilID(T* mesh, bool ignore_existing)
 {
-    std::string mesh_name = GetMeshName(mesh);
-    if (mesh_name == "" || common_utils::Utils::startsWith(mesh_name, "Default_")) {
+    std::string mesh_name = common_utils::Utils::toLower(GetMeshName(mesh));
+    if (mesh_name == "" || common_utils::Utils::startsWith(mesh_name, "default_")) {
         //common_utils::Utils::DebugBreak();
         return;
     }
     FString name(mesh_name.c_str());
     int hash = 5;
-    int max_len = name.Len() - name.Len() / 4; //remove training numerical suffixes
-    if (max_len < 3)
-        max_len = name.Len();
-    for (int idx = 0; idx < max_len; ++idx) {
-        hash += UKismetStringLibrary::GetCharacterAsNumber(name, idx);
+    for (int idx = 0; idx < name.Len(); ++idx) {
+        auto char_num = UKismetStringLibrary::GetCharacterAsNumber(name, idx);
+        if (char_num < 97)
+            continue; //numerics and other punctuations
+        hash += char_num;
     }
     if (ignore_existing || mesh->CustomDepthStencilValue == 0) { //if value is already set then don't bother
         SetObjectStencilID(mesh, hash % 256);
@@ -155,16 +179,46 @@ void UAirBlueprintLib::InitializeObjectStencilID(T* mesh, bool ignore_existing)
 template<typename T>
 void UAirBlueprintLib::SetObjectStencilID(T* mesh, int object_id)
 {
-    mesh->SetCustomDepthStencilValue(object_id);
-    mesh->SetRenderCustomDepth(true);
+    if (object_id < 0)
+    {
+        mesh->SetRenderCustomDepth(false);
+    }
+    else
+    {
+        mesh->SetCustomDepthStencilValue(object_id);
+        mesh->SetRenderCustomDepth(true);
+    }
     //mesh->SetVisibility(false);
     //mesh->SetVisibility(true);
 }
 
 void UAirBlueprintLib::SetObjectStencilID(ALandscapeProxy* mesh, int object_id)
 {
-    mesh->CustomDepthStencilValue = object_id;
-    mesh->bRenderCustomDepth = true;
+    if (object_id < 0)
+    {
+        mesh->bRenderCustomDepth = false;
+    }
+    else
+    {
+        mesh->CustomDepthStencilValue = object_id;
+        mesh->bRenderCustomDepth = true;
+    }
+
+    // Explicitly set the custom depth state on the components so the
+    // render state is marked dirty and the update actually takes effect
+    // immediately.
+    for (ULandscapeComponent* comp : mesh->LandscapeComponents)
+    {
+        if (object_id < 0)
+        {
+            comp->SetRenderCustomDepth(false);
+        }
+        else
+        {
+            comp->SetCustomDepthStencilValue(object_id);
+            comp->SetRenderCustomDepth(true);
+        }
+    }
 }
 
 template<class T>
@@ -181,11 +235,11 @@ std::string UAirBlueprintLib::GetMeshName(ALandscapeProxy* mesh)
     return std::string(TCHAR_TO_UTF8(*(mesh->GetName())));
 }
 
-void UAirBlueprintLib::InitializeMeshStencilIDs()
+void UAirBlueprintLib::InitializeMeshStencilIDs(bool ignore_existing)
 {
-    for (TObjectIterator<UMeshComponent> comp; comp; ++comp)
+    for (TObjectIterator<UStaticMeshComponent> comp; comp; ++comp)
     {
-        InitializeObjectStencilID(*comp);
+        InitializeObjectStencilID(*comp, ignore_existing);
     }
     //for (TObjectIterator<UFoliageType> comp; comp; ++comp)
     //{
@@ -193,7 +247,7 @@ void UAirBlueprintLib::InitializeMeshStencilIDs()
     //}
     for (TObjectIterator<ALandscapeProxy> comp; comp; ++comp)
     {
-        InitializeObjectStencilID(*comp);
+        InitializeObjectStencilID(*comp, ignore_existing);
     }
 }
 
@@ -220,7 +274,7 @@ bool UAirBlueprintLib::SetMeshStencilID(const std::string& mesh_name, int object
         name_regex.assign(mesh_name, std::regex_constants::icase);
 
     int changes = 0;
-    for (TObjectIterator<UMeshComponent> comp; comp; ++comp)
+    for (TObjectIterator<UStaticMeshComponent> comp; comp; ++comp)
     {
         SetObjectStencilIDIfMatch(*comp, object_id, mesh_name, is_name_regex, name_regex, changes);
     }

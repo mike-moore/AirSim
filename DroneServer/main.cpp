@@ -6,7 +6,7 @@
 #include "vehicles/multirotor/api/MultirotorRpcLibServer.hpp"
 #include "vehicles/multirotor/controllers/MavLinkDroneController.hpp"
 #include "vehicles/multirotor/controllers/RealMultirotorConnector.hpp"
-#include "controllers/Settings.hpp"
+#include "common/Settings.hpp"
 
 using namespace std;
 using namespace msr::airlib;
@@ -33,7 +33,8 @@ int main(int argc, const char* argv[])
     MavLinkDroneController::ConnectionInfo connection_info;
     
     // read settings and override defaults
-    Settings& settings = Settings::singleton().loadJSonFile("settings.json");
+    auto settings_full_filepath = Settings::getUserDirectoryFullPath("settings.json");
+    Settings& settings = Settings::singleton().loadJSonFile(settings_full_filepath);
     Settings child;
     if (settings.isLoadSuccess()) {
         settings.getChild("PX4", child);
@@ -68,7 +69,7 @@ int main(int argc, const char* argv[])
 
     }
     else {
-        std::cout << "Could not load settings from " << Settings::singleton().getFileName() << std::endl;
+        std::cout << "Could not load settings from " << Settings::singleton().getFullFilePath() << std::endl;
         return 3;
 
     }

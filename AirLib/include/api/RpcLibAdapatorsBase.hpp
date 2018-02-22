@@ -7,7 +7,7 @@
 #include "common/Common.hpp"
 #include "common/CommonStructs.hpp"
 #include "physics/Kinematics.hpp"
-#include "controllers/ImageCaptureBase.hpp"
+#include "common/ImageCaptureBase.hpp"
 #include "safety/SafetyEval.hpp"
 #include "rpc/msgpack.hpp"
 
@@ -195,6 +195,31 @@ public:
             d.is_valid = is_valid;
             
             return d;
+        }
+    };
+
+    struct CameraInfo {
+        Pose pose;
+        float fov;
+
+        MSGPACK_DEFINE_MAP(pose, fov);
+
+        CameraInfo()
+        {}
+
+        CameraInfo(const msr::airlib::CameraInfo& s)
+        {
+            pose = s.pose;
+            fov = s.fov;
+        }
+
+        msr::airlib::CameraInfo to() const
+        {
+            msr::airlib::CameraInfo s;
+            s.pose = pose.to();
+            s.fov = fov;
+
+            return s;
         }
     };
     

@@ -11,6 +11,7 @@
 #include "OffboardApi.hpp"
 #include "Mixer.hpp"
 #include "CascadeController.hpp"
+#include "AdaptiveController.hpp"
 
 
 namespace simple_flight {
@@ -19,10 +20,21 @@ class Firmware : public IFirmware {
 public:
     Firmware(const Params* params, IBoard* board, ICommLink* comm_link, IStateEstimator* state_estimator)
         : params_(params), board_(board), comm_link_(comm_link), state_estimator_(state_estimator),
-          offboard_api_(params, board, board, state_estimator, comm_link), mixer_(params), 
-          controller_(params, board, comm_link)
+        offboard_api_(params, board, board, state_estimator, comm_link), mixer_(params)
     {
-        controller_.initialize(&offboard_api_, state_estimator_);
+        switch (params->controller_type) {
+        case Params::ControllerType::Cascade:
+            controller_ = std::unique_ptr<CascadeController>(new CascadeController(params, board, comm_link));
+            break;
+        case Params::ControllerType::Adaptive:
+            controller_ = std::unique_ptr<AdaptiveController>(new AdaptiveController());
+            break;
+        default:
+            throw std::invalid_argument("Cannot regonize controller specified by params->controller_type");
+        }
+        
+
+        controller_->initialize(&offboard_api_, state_estimator_);
     }
 
     virtual void reset() override
@@ -31,7 +43,7 @@ public:
 
         board_->reset();
         comm_link_->reset();
-        controller_.reset();
+        controller_->reset();
         offboard_api_.reset();
 
         motor_outputs_.assign(params_->motor.motor_count, 0);
@@ -43,9 +55,9 @@ public:
 
         board_->update();
         offboard_api_.update();
-        controller_.update();
+        controller_->update();
 
-        const Axis4r& output_controls = controller_.getOutput();
+        const Axis4r& output_controls = controller_->getOutput();
 
         //convert controller output in to motor outputs
         mixer_.getMotorOutput(output_controls, motor_outputs_);
@@ -72,7 +84,7 @@ private:
 
     OffboardApi offboard_api_;
     Mixer mixer_;
-    CascadeController controller_;
+    std::unique_ptr<IController> controller_;
 
     std::vector<float> motor_outputs_;
 };

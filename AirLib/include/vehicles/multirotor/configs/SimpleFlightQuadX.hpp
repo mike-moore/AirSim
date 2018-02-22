@@ -6,23 +6,26 @@
 
 #include "vehicles/multirotor/firmwares/simple_flight/SimpleFlightDroneController.hpp"
 #include "vehicles/multirotor/MultiRotorParams.hpp"
-#include "controllers/Settings.hpp"
+#include "common/AirSimSettings.hpp"
+#include "sensors/SensorFactory.hpp"
 
 
 namespace msr { namespace airlib {
 
 class SimpleFlightQuadX : public MultiRotorParams {
 public:
-    SimpleFlightQuadX(Settings& settings)
+    SimpleFlightQuadX(const AirSimSettings::VehicleSettings& vehicle_settings, std::shared_ptr<const SensorFactory> sensor_factory)
+        : vehicle_settings_(vehicle_settings), sensor_factory_(sensor_factory)
     {
-        unused(settings);
     }
 
     virtual ~SimpleFlightQuadX() = default;
 
 protected:
-    virtual void setup(Params& params, SensorCollection& sensors, unique_ptr<DroneControllerBase>& controller) override
+    virtual void setupParams() override
     {
+        auto& params = getParams();
+
         /******* Below is same config as PX4 generic model ********/
 
         //set up arm lengths
@@ -49,21 +52,24 @@ protected:
         //compute inertia matrix
         computeInertiaMatrix(params.inertia, params.body_box, params.rotor_poses, box_mass, motor_assembly_weight);
 
-        createStandardSensors(sensor_storage_, sensors, params.enabled_sensors);
-        createController(controller, sensors);
-
         //leave everything else to defaults
     }
 
-private:
-    void createController(unique_ptr<DroneControllerBase>& controller, SensorCollection& sensors)
+    virtual std::unique_ptr<SensorBase> createSensor(SensorBase::SensorType sensor_type) override
     {
-        unused(sensors);
-        controller.reset(new SimpleFlightDroneController(this));
+        return sensor_factory_->createSensor(sensor_type);
     }
+
+    virtual std::unique_ptr<DroneControllerBase> createController() override
+    {
+        return std::unique_ptr<DroneControllerBase>(new SimpleFlightDroneController(this, vehicle_settings_));
+    }
+
 
 private:
     vector<unique_ptr<SensorBase>> sensor_storage_;
+    AirSimSettings::VehicleSettings vehicle_settings_;
+    std::shared_ptr<const SensorFactory> sensor_factory_;
 };
 
 }} //namespace

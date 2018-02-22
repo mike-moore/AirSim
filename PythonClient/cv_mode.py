@@ -9,6 +9,16 @@ pp = pprint.PrettyPrinter(indent=4)
 client = MultirotorClient()
 client.confirmConnection()
 
+
+AirSimClientBase.wait_key('Press any key to set camera-0 gimble to 15-degree pitch')
+client.setCameraOrientation(0, AirSimClientBase.toQuaternion(0.261799, 0, 0)); #radians
+
+AirSimClientBase.wait_key('Press any key to get camera parameters')
+for camera_id in range(5):
+    camera_info = client.getCameraInfo(camera_id)
+    print("CameraInfo %d: %s" % (camera_id, pp.pprint(camera_info)))
+
+AirSimClientBase.wait_key('Press any key to get images')
 for x in range(3): # do few times
     z = x * -20 - 5 # some random number
     client.simSetPose(Pose(Vector3r(z, z, z), AirSimClientBase.toQuaternion(x / 3.0, 0, x / 3.0)), True)

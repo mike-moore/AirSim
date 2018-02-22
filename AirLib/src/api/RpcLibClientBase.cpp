@@ -19,6 +19,9 @@ STRICT_MODE_OFF
 #define RPCLIB_MSGPACK clmdep_msgpack
 #endif // !RPCLIB_MSGPACK
 #undef check
+#ifdef nil
+#undef nil
+#endif // nil
 #include "rpc/client.h"
 #include "api/RpcLibAdapatorsBase.hpp"
 STRICT_MODE_ON
@@ -149,6 +152,15 @@ void* RpcLibClientBase::getClient()
     return &pimpl_->client;
 }
 
+CameraInfo RpcLibClientBase::getCameraInfo(int camera_id)
+{
+    return pimpl_->client.call("getCameraInfo", camera_id).as<RpcLibAdapatorsBase::CameraInfo>().to();
+}
+
+void RpcLibClientBase::setCameraOrientation(int camera_id, const Quaternionr& orientation)
+{
+    pimpl_->client.call("setCameraOrientation", camera_id, RpcLibAdapatorsBase::Quaternionr(orientation));
+}
 
 CollisionInfo RpcLibClientBase::getCollisionInfo()
 {

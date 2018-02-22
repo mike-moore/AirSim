@@ -9,7 +9,7 @@
 #include "vehicles/multirotor/controllers/DroneControllerBase.hpp"
 #include "controllers/VehicleConnectorBase.hpp"
 #include "api/VehicleApiBase.hpp"
-#include "controllers/Waiter.hpp"
+#include "common/Waiter.hpp"
 #include <atomic>
 #include <thread>
 #include <memory>
@@ -199,6 +199,7 @@ public:
         return controller_->getRCData();
     }
 
+
     //TODO: add GPS health, accuracy in API
     GeoPoint getGpsLocation()
     {
@@ -280,6 +281,15 @@ public:
         return vehicle_->getSegmentationObjectID(mesh_name);
     }
 
+    virtual CameraInfo getCameraInfo(int camera_id) const override
+    {
+        return vehicle_->getCameraInfo(camera_id);
+    }
+
+    virtual void setCameraOrientation(int camera_id, const Quaternionr& orientation) override
+    {
+        vehicle_->setCameraOrientation(camera_id, orientation);
+    }
 
     virtual bool isApiControlEnabled() const override
     {
@@ -289,6 +299,11 @@ public:
     virtual void reset() override
     {
         vehicle_->reset();
+    }
+
+    virtual void setRCData(const RCData& data)
+    {
+        controller_->setRCData(data);
     }
 
 
@@ -546,7 +561,6 @@ private:// types
             controller->hover(cancelable);
         }
     };
-
 
 private: //vars
     VehicleConnectorBase* vehicle_ = nullptr;

@@ -39,7 +39,11 @@ fi
 
 #start Unreal editor with Blocks project
 pushd "$UnrealDir" >/dev/null
-Engine/Binaries/Linux/UE4Editor "$SCRIPT_DIR/AirSim/Unreal/Environments/Blocks/Blocks.uproject" -game -log
+if [ "$(uname)" == "Darwin" ]; then
+    Engine/Binaries/Mac/UE4Editor.app/Contents/MacOS/UE4Editor "$SCRIPT_DIR/Unreal/Environments/Blocks/Blocks.uproject" -game -log
+else
+    Engine/Binaries/Linux/UE4Editor "$SCRIPT_DIR/Unreal/Environments/Blocks/Blocks.uproject" -game -log
+fi
 popd >/dev/null
 
 popd >/dev/null

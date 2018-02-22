@@ -56,6 +56,7 @@ public: //interface
         collision_info_ = collision_info;
     }
 
+
 public: //methods
     //constructors
     PhysicsBody()

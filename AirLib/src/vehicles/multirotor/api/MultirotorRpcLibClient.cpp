@@ -16,6 +16,9 @@ STRICT_MODE_OFF
 #define RPCLIB_MSGPACK clmdep_msgpack
 #endif // !RPCLIB_MSGPACK
 #undef check
+#ifdef nil
+#undef nil
+#endif // nil
 #include "rpc/client.h"
 #include "vehicles/multirotor/api/MultirotorRpcLibAdapators.hpp"
 STRICT_MODE_ON
@@ -146,6 +149,10 @@ DroneControllerBase::LandedState MultirotorRpcLibClient::getLandedState()
 RCData MultirotorRpcLibClient::getRCData()
 {
     return static_cast<rpc::client*>(getClient())->call("getRCData").as<MultirotorRpcLibAdapators::RCData>().to();
+}
+void MultirotorRpcLibClient::setRCData(const RCData& rc_data)
+{
+    static_cast<rpc::client*>(getClient())->call("setRCData", MultirotorRpcLibAdapators::RCData(rc_data));
 }
 
 GeoPoint MultirotorRpcLibClient::getGpsLocation()
