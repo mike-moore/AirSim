@@ -86,6 +86,9 @@ public: //types
         float auto_exposure_histogram_log_max = Utils::nan<float>(); // 4;
         float motion_blur_amount = Utils::nan<float>();
         float target_gamma = Utils::nan<float>(); //1.0f; //This would be reset to kSceneTargetGamma for scene as default
+        int projection_mode = 0; // ECameraProjectionMode::Perspective
+        float ortho_width = Utils::nan<float>();
+
     };
 
     struct NoiseSetting {
@@ -117,8 +120,21 @@ public: //types
             None, CommonObjectsRandomIDs
         };
 
+        enum class MeshNamingMethodType {
+            OwnerName, StaticMeshName
+        };
+
         InitMethodType init_method = InitMethodType::CommonObjectsRandomIDs;
         bool override_existing = false;
+        MeshNamingMethodType mesh_naming_method = MeshNamingMethodType::OwnerName;
+    };
+
+    struct TimeOfDaySettings {
+        bool enabled = false;
+        std::string start_datetime = "";    //format: %Y-%m-%d %H:%M:%S
+        bool is_start_datetime_dst = false;
+        float celestial_clock_speed = 1;
+        float update_interval_secs = 60;
     };
 
 private: //fields
@@ -135,6 +151,7 @@ public: //fields
 
     RecordingSettings recording_settings;
     SegmentationSettings segmentation_settings;
+    TimeOfDaySettings tod_settings;
 
     std::vector<std::string> warning_messages;
 
@@ -150,6 +167,7 @@ public: //fields
     float clock_speed;
     bool engine_sound;
     bool log_messages_visible;
+    HomeGeoPoint origin_geopoint;
 
 public: //methods
     static AirSimSettings& singleton() 
@@ -190,6 +208,9 @@ public: //methods
 
         initializeSubwindowSettings();
         initializeImageTypeSettings();
+        segmentation_settings = SegmentationSettings();
+        noise_settings.clear();
+        capture_settings.clear();
 
         simmode_name = "";
         recording_settings = RecordingSettings();
@@ -205,6 +226,8 @@ public: //methods
         clock_speed = 1.0f;
         engine_sound = true;     
         log_messages_visible = true;
+        //0,0,0 in Unreal is mapped to this GPS coordinates
+        origin_geopoint = HomeGeoPoint(GeoPoint(47.641468, -122.140165, 122)); 
     }
 
     VehicleSettings getVehicleSettings(const std::string& vehicle_name)
@@ -388,16 +411,24 @@ private:
     {
         Settings json_parent;
         if (settings.getChild("SegmentationSettings", json_parent)) {
-            std::string init_method = Utils::toLower(json_parent.getString("init_method", ""));
-            if (init_method == "" || init_method == "none")
-                segmentation_settings.init_method = SegmentationSettings::InitMethodType::None;
-            else if (init_method == "commonobjectsrandomids")
+            std::string init_method = Utils::toLower(json_parent.getString("InitMethod", ""));
+            if (init_method == "" || init_method == "commonobjectsrandomids")
                 segmentation_settings.init_method = SegmentationSettings::InitMethodType::CommonObjectsRandomIDs;
+            else if (init_method == "none")
+                segmentation_settings.init_method = SegmentationSettings::InitMethodType::None;
             else
                 //TODO: below exception doesn't actually get raised right now because of issue in Unreal Engine?
                 throw std::invalid_argument(std::string("SegmentationSettings init_method has invalid value in settings ") + init_method);
 
             segmentation_settings.override_existing = json_parent.getBool("OverrideExisting", false);
+
+            std::string mesh_naming_method = Utils::toLower(json_parent.getString("MeshNamingMethod", ""));
+            if (mesh_naming_method == "" || mesh_naming_method == "ownername")
+                segmentation_settings.mesh_naming_method = SegmentationSettings::MeshNamingMethodType::OwnerName;
+            else if (mesh_naming_method == "staticmeshname")
+                segmentation_settings.mesh_naming_method = SegmentationSettings::MeshNamingMethodType::StaticMeshName;
+            else
+                throw std::invalid_argument(std::string("SegmentationSettings MeshNamingMethod has invalid value in settings ") + mesh_naming_method);
         }
     }
 
@@ -453,6 +484,16 @@ private:
         capture_setting.image_type = settings.getInt("ImageType", 0);
         capture_setting.target_gamma = settings.getFloat("TargetGamma", 
             capture_setting.image_type == 0 ? CaptureSetting::kSceneTargetGamma : Utils::nan<float>());
+
+        std::string projection_mode = Utils::toLower(settings.getString("ProjectionMode", ""));
+        if (projection_mode == "" || projection_mode == "perspective")
+            capture_setting.projection_mode = 0; // Perspective
+        else if (projection_mode == "orthographic")
+            capture_setting.projection_mode = 1; // Orthographic
+        else
+            throw std::invalid_argument(std::string("CaptureSettings projection_mode has invalid value in settings ") + projection_mode);
+
+        capture_setting.ortho_width = settings.getFloat("OrthoWidth", capture_setting.ortho_width);
     }
 
     void loadSubWindowsSettings(const Settings& settings)
@@ -511,6 +552,28 @@ private:
 
         enable_collision_passthrough = settings.getBool("EnableCollisionPassthrogh", false);
         log_messages_visible = settings.getBool("LogMessagesVisible", true);
+
+        {   //load origin geopoint
+            Settings origin_geopoint_json;
+            if (settings.getChild("OriginGeopoint", origin_geopoint_json)) {
+                GeoPoint origin = origin_geopoint.home_point;
+                origin.latitude = origin_geopoint_json.getDouble("Latitude", origin.latitude);
+                origin.longitude = origin_geopoint_json.getDouble("Longitude", origin.longitude);
+                origin.altitude = origin_geopoint_json.getFloat("Latitude", origin.altitude);
+                origin_geopoint.initialize(origin);
+            }
+        }
+
+        {   //time of day settings
+            Settings tod_settings_json;
+            if (settings.getChild("TimeOfDay", tod_settings_json)) {
+                tod_settings.enabled = tod_settings_json.getBool("Enabled", tod_settings.enabled);
+                tod_settings.start_datetime = tod_settings_json.getString("StartDateTime", tod_settings.start_datetime);
+                tod_settings.celestial_clock_speed = tod_settings_json.getFloat("CelestialClockSpeed", tod_settings.celestial_clock_speed);
+                tod_settings.is_start_datetime_dst = tod_settings_json.getBool("StartDateTimeDst", tod_settings.is_start_datetime_dst);
+                tod_settings.update_interval_secs = tod_settings_json.getFloat("UpdateIntervalSecs", tod_settings.update_interval_secs);
+            }
+        }
     }
 
     void loadClockSettings(const Settings& settings)
