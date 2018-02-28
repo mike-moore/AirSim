@@ -41,7 +41,7 @@ public:
             enable_passthrough_on_collisions(false),
             home_lattitude(47.641468),
             home_longitude(-122.140165),
-            home_altitude(122),
+            home_altitude(140),
             enable_trace(false)
         {
         }

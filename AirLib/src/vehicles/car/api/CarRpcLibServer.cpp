@@ -33,11 +33,11 @@ typedef msr::airlib_rpclib::CarRpcLibAdapators CarRpcLibAdapators;
 CarRpcLibServer::CarRpcLibServer(CarApiBase* vehicle, string server_address, uint16_t port)
     : RpcLibServerBase(vehicle, server_address, port)
 {
-    (static_cast<rpc::server*>(getServer()))->
+    /*(static_cast<rpc::server*>(getServer()))->
         bind("getCarState", [&]() -> CarRpcLibAdapators::CarState {
         return CarRpcLibAdapators::CarState(getCarApi()->getCarState());
     });
-
+*/
     (static_cast<rpc::server*>(getServer()))->
         bind("setCarControls", [&](const CarRpcLibAdapators::CarControls& controls) -> void {
         getCarApi()->setCarControls(controls.to());

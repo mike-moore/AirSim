@@ -53,9 +53,12 @@ CarApiBase::CarState CarRpcLibClient::getCarState()
 
 GeoPoint CarRpcLibClient::getGpsLocation()
 {
-    return static_cast<rpc::client*>(getClient())->call("getGpsLocation").as<CarRpcLibAdapators::GeoPoint>().to();
+    return GeoPoint(99.0,99.0,99.0); //static_cast<rpc::client*>(getClient())->call("getGpsLocation").as<CarRpcLibAdapators::GeoPoint>().to();
 }
-
+int CarRpcLibClient::getTest()
+{
+	return 2;
+}
 }} //namespace
 
 #endif

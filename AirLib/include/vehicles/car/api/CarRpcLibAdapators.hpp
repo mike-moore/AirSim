@@ -76,8 +76,9 @@ public:
         }
 	
 	
-    };
+    };	
 };
+
 
 }} //namespace
 

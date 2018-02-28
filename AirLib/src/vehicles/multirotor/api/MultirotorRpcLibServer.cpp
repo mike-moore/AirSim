@@ -113,10 +113,10 @@ MultirotorRpcLibServer::MultirotorRpcLibServer(MultirotorApi* drone, string serv
         bind("getRCData", [&]() -> MultirotorRpcLibAdapators::RCData { 
         return MultirotorRpcLibAdapators::RCData(getDroneApi()->getRCData()); 
     });
-    (static_cast<rpc::server*>(getServer()))->
+   /* (static_cast<rpc::server*>(getServer()))->
         bind("getGpsLocation", [&]() -> MultirotorRpcLibAdapators::GeoPoint { 
         return MultirotorRpcLibAdapators::GeoPoint(getDroneApi()->getGpsLocation()); 
-    });
+    });*/
     (static_cast<rpc::server*>(getServer()))->
         bind("isSimulationMode", [&]() -> bool { 
         return getDroneApi()->isSimulationMode(); 

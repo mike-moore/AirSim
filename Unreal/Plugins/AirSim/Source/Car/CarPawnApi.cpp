@@ -94,6 +94,7 @@ CarApiBase::CarState CarPawnApi::getCarState()
         movement_->GetCurrentGear(),
         pawn_->getCollisionInfo(),
         *pawn_->getTrueKinematics(),
+	GeoPoint(99.0,99.0,99.0),
         msr::airlib::ClockFactory::get()->nowNanos()
     );
     return state;

@@ -62,7 +62,9 @@ public:
         }
     };
 
-    virtual GeoPoint getGpsLocation() = 0;
+    GeoPoint getGpsLocation(){
+		return GeoPoint(99.0,99.0,99.0);
+	}
     virtual void setCarControls(const CarControls& controls) = 0;
     virtual CarState getCarState() = 0;
     virtual const CarApiBase::CarControls& getCarControls() const = 0;

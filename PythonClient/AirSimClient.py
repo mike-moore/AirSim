@@ -556,5 +556,7 @@ class CarClient(AirSimClientBase, object):
         state_raw = self.client.call('getCarState')
         return CarState.from_msgpack(state_raw)
 
+    def getTest(self):return self.client.call('getTest')
+
     def getGpsLocation(self):
         return GeoPoint.from_msgpack(self.client.call('getGpsLocation'))

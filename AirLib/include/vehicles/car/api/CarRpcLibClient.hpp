@@ -21,6 +21,7 @@ public:
     void reset();
     CarApiBase::CarState getCarState();
     GeoPoint getGpsLocation();
+    int getTest();
 
     virtual ~CarRpcLibClient();    //required for pimpl
 };
